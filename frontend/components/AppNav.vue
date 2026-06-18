@@ -18,6 +18,7 @@ onMounted(init)
         <NuxtLink to="/pricing" class="topbar__link">Pricing</NuxtLink>
         <NuxtLink to="/api" class="topbar__link">API</NuxtLink>
         <NuxtLink to="/docs" class="topbar__link">Docs</NuxtLink>
+        <NuxtLink to="/about" class="topbar__link">About</NuxtLink>
       </nav>
 
       <div class="topbar__end">
