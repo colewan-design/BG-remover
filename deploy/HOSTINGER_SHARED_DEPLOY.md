@@ -113,6 +113,20 @@ php artisan route:cache
 php artisan view:cache
 ```
 
+Before testing the frontend, verify the API subdomain is really serving Laravel and not a hosting placeholder page:
+
+```text
+https://bgremover-api.salidumay.com/api/health
+```
+
+Expected result:
+
+```json
+{"status":"ok", ...}
+```
+
+If you get Hostinger's "This Page Does Not Exist" page instead, the subdomain is not pointing at Laravel's `public/` entrypoint yet, so frontend Google sign-in will fail with CORS errors even if your `.env` values are correct.
+
 ## 6. Important limitation
 
 This shared-hosting approach is for:

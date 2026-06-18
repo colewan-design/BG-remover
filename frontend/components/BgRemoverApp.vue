@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 
 useHead({
   script: [
@@ -29,10 +29,12 @@ const isAuthenticating = ref(false)
 const downloadAfterLogin = ref(false)
 const pendingGoogleAuth = ref(false)
 const authState = ref(null)
-const googleTokenClient = ref(null)
+const googleTokenClient = shallowRef(null)
 const { isDark, toggle: toggleTheme, init: initTheme } = useTheme()
 
-const hasGoogleClientId = computed(() => Boolean(config.public.googleClientId))
+const backendApiBase = computed(() => config.public.backendApiBase.replace(/\/+$/, ''))
+const googleClientId = computed(() => config.public.googleClientId.trim())
+const hasGoogleClientId = computed(() => Boolean(googleClientId.value))
 const isSignedIn = computed(() => Boolean(authState.value?.token))
 const signedInLabel = computed(() => authState.value?.user?.name || authState.value?.user?.email || 'Google user')
 
@@ -70,7 +72,7 @@ async function apiRequest(path, options = {}) {
     headers.Authorization = `Bearer ${authState.value.token}`
   }
 
-  const response = await fetch(`${config.public.backendApiBase}${path}`, {
+  const response = await fetch(`${backendApiBase.value}${path}`, {
     ...options,
     headers,
   })
@@ -133,8 +135,8 @@ function initializeGoogleAuth() {
     return
   }
 
-  googleTokenClient.value = window.google.accounts.oauth2.initTokenClient({
-    client_id: config.public.googleClientId,
+  googleTokenClient.value = markRaw(window.google.accounts.oauth2.initTokenClient({
+    client_id: googleClientId.value,
     scope: 'openid email profile',
     prompt: 'select_account',
     callback: handleGoogleAccessTokenResponse,
@@ -143,7 +145,7 @@ function initializeGoogleAuth() {
       console.error('Google OAuth failed:', error)
       window.alert('Google sign-in was cancelled or blocked. Please try again.')
     },
-  })
+  }))
 
   isGoogleReady.value = true
 
