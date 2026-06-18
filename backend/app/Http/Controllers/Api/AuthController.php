@@ -7,6 +7,7 @@ use App\Models\User;
 use Google\Client as GoogleClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -15,12 +16,13 @@ class AuthController extends Controller
     public function google(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'credential' => ['required', 'string'],
+            'credential' => ['nullable', 'string'],
+            'access_token' => ['nullable', 'string'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'The Google credential is required.',
+                'message' => 'A Google credential or access token is required.',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -33,15 +35,36 @@ class AuthController extends Controller
             ], 500);
         }
 
-        $client = new GoogleClient([
-            'client_id' => $googleClientId,
-        ]);
+        $credential = $request->string('credential')->toString();
+        $accessToken = $request->string('access_token')->toString();
 
-        $payload = $client->verifyIdToken($request->string('credential')->toString());
+        if ($credential === '' && $accessToken === '') {
+            return response()->json([
+                'message' => 'A Google credential or access token is required.',
+            ], 422);
+        }
+
+        $payload = null;
+
+        if ($credential !== '') {
+            $client = new GoogleClient([
+                'client_id' => $googleClientId,
+            ]);
+
+            $payload = $client->verifyIdToken($credential);
+        } elseif ($accessToken !== '') {
+            $response = Http::acceptJson()
+                ->withToken($accessToken)
+                ->get('https://openidconnect.googleapis.com/v1/userinfo');
+
+            if ($response->ok()) {
+                $payload = $response->json();
+            }
+        }
 
         if (!$payload) {
             return response()->json([
-                'message' => 'The Google credential could not be verified.',
+                'message' => 'The Google sign-in could not be verified.',
             ], 401);
         }
 

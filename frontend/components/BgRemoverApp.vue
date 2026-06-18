@@ -15,8 +15,6 @@ const config = useRuntimeConfig()
 const authStorageKey = 'bg-remover-auth'
 
 const fileInput = ref(null)
-const googleButtonHost = ref(null)
-
 const isLoading = ref(false)
 const hasResult = ref(false)
 const progress = ref(0)
@@ -28,32 +26,15 @@ const resultImageUrl = ref('')
 
 const isGoogleReady = ref(false)
 const isAuthenticating = ref(false)
-const showSignInPrompt = ref(false)
 const downloadAfterLogin = ref(false)
+const pendingGoogleAuth = ref(false)
 const authState = ref(null)
+const googleTokenClient = ref(null)
+const { isDark, toggle: toggleTheme, init: initTheme } = useTheme()
 
 const hasGoogleClientId = computed(() => Boolean(config.public.googleClientId))
 const isSignedIn = computed(() => Boolean(authState.value?.token))
 const signedInLabel = computed(() => authState.value?.user?.name || authState.value?.user?.email || 'Google user')
-
-function decodeJwtPayload(token) {
-  const [, payload] = token.split('.')
-
-  if (!payload) {
-    return null
-  }
-
-  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
-  const json = decodeURIComponent(
-    atob(padded)
-      .split('')
-      .map((character) => `%${`00${character.charCodeAt(0).toString(16)}`.slice(-2)}`)
-      .join('')
-  )
-
-  return JSON.parse(json)
-}
 
 function persistAuth(state) {
   authState.value = state
@@ -117,31 +98,24 @@ async function signOut() {
   }
 }
 
-async function handleGoogleCredentialResponse(response) {
+async function handleGoogleAccessTokenResponse(response) {
   try {
-    const previewPayload = decodeJwtPayload(response.credential)
-
     const data = await apiRequest('/auth/google', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        credential: response.credential,
+        access_token: response.access_token,
       }),
     })
 
     persistAuth({
       token: data.token,
-      user: data.user || {
-        name: previewPayload?.name,
-        email: previewPayload?.email,
-        avatar: previewPayload?.picture,
-      },
+      user: data.user,
     })
 
     isAuthenticating.value = false
-    showSignInPrompt.value = false
 
     if (downloadAfterLogin.value) {
       downloadAfterLogin.value = false
@@ -154,36 +128,29 @@ async function handleGoogleCredentialResponse(response) {
   }
 }
 
-function mountGoogleButton() {
-  if (!import.meta.client || !googleButtonHost.value || !window.google?.accounts?.id || !hasGoogleClientId.value) {
-    return
-  }
-
-  googleButtonHost.value.innerHTML = ''
-
-  window.google.accounts.id.renderButton(googleButtonHost.value, {
-    theme: 'outline',
-    size: 'large',
-    width: 280,
-    text: 'signin_with',
-    shape: 'pill',
-  })
-}
-
 function initializeGoogleAuth() {
-  if (!import.meta.client || !window.google?.accounts?.id || !hasGoogleClientId.value) {
+  if (!import.meta.client || !window.google?.accounts?.oauth2 || !hasGoogleClientId.value) {
     return
   }
 
-  window.google.accounts.id.initialize({
+  googleTokenClient.value = window.google.accounts.oauth2.initTokenClient({
     client_id: config.public.googleClientId,
-    callback: handleGoogleCredentialResponse,
-    auto_select: false,
-    cancel_on_tap_outside: true,
+    scope: 'openid email profile',
+    prompt: 'select_account',
+    callback: handleGoogleAccessTokenResponse,
+    error_callback: (error) => {
+      isAuthenticating.value = false
+      console.error('Google OAuth failed:', error)
+      window.alert('Google sign-in was cancelled or blocked. Please try again.')
+    },
   })
 
   isGoogleReady.value = true
-  mountGoogleButton()
+
+  if (pendingGoogleAuth.value) {
+    pendingGoogleAuth.value = false
+    triggerGoogleAuth()
+  }
 }
 
 function waitForGoogleScript() {
@@ -196,7 +163,7 @@ function waitForGoogleScript() {
   const timer = window.setInterval(() => {
     attempts += 1
 
-    if (window.google?.accounts?.id) {
+    if (window.google?.accounts?.oauth2) {
       window.clearInterval(timer)
       initializeGoogleAuth()
     } else if (attempts >= 50) {
@@ -205,21 +172,32 @@ function waitForGoogleScript() {
   }, 200)
 }
 
-function openGoogleSignIn() {
-  showSignInPrompt.value = true
+function triggerGoogleAuth() {
+  if (!isGoogleReady.value || !googleTokenClient.value) {
+    pendingGoogleAuth.value = true
+    waitForGoogleScript()
+    return
+  }
 
+  isAuthenticating.value = true
+  googleTokenClient.value.requestAccessToken({
+    prompt: 'select_account',
+  })
+}
+
+function openGoogleSignIn() {
   if (!hasGoogleClientId.value) {
     window.alert('Google sign-in is not configured yet. Add NUXT_PUBLIC_GOOGLE_CLIENT_ID before deploying this flow.')
     return
   }
 
   if (!isGoogleReady.value) {
+    pendingGoogleAuth.value = true
     waitForGoogleScript()
     return
   }
 
-  isAuthenticating.value = true
-  window.google.accounts.id.prompt()
+  triggerGoogleAuth()
 }
 
 function openFilePicker() {
@@ -328,6 +306,7 @@ async function downloadResult(skipAuthCheck = false) {
 }
 
 onMounted(async () => {
+  initTheme()
   hydrateStoredAuth()
   waitForGoogleScript()
 
@@ -363,10 +342,10 @@ onBeforeUnmount(() => {
         </div>
 
         <nav class="topbar__nav" aria-label="Main navigation">
-          <a href="#" class="topbar__link">Features</a>
-          <a href="#" class="topbar__link">Pricing</a>
-          <a href="#" class="topbar__link">API</a>
-          <a href="#" class="topbar__link">Docs</a>
+          <NuxtLink to="/features" class="topbar__link">Features</NuxtLink>
+          <NuxtLink to="/pricing" class="topbar__link">Pricing</NuxtLink>
+          <NuxtLink to="/api" class="topbar__link">API</NuxtLink>
+          <NuxtLink to="/docs" class="topbar__link">Docs</NuxtLink>
         </nav>
 
         <div class="topbar__auth">
@@ -388,6 +367,20 @@ onBeforeUnmount(() => {
             Sign in with Google
           </button>
         </div>
+
+        <button class="btn btn--theme" type="button" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="toggleTheme">
+          <!-- Sun icon (shown in dark mode to switch to light) -->
+          <svg v-if="isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <!-- Moon icon (shown in light mode to switch to dark) -->
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
 
         <button class="btn btn--cta" type="button" @click="openFilePicker">
           <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -582,23 +575,5 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="showSignInPrompt" class="auth-modal">
-      <div class="auth-modal__backdrop" @click="showSignInPrompt = false" />
-      <div class="auth-modal__card">
-        <p class="auth-modal__eyebrow">Download Access</p>
-        <h2 class="auth-modal__title">Sign in with Google to continue</h2>
-        <p class="auth-modal__copy">
-          Background removal still happens locally in the browser. Google sign-in is only used to unlock downloads.
-        </p>
-        <div v-if="hasGoogleClientId" ref="googleButtonHost" class="auth-modal__google-button" />
-        <p v-else class="auth-modal__warning">
-          Google sign-in is not configured yet. Add `NUXT_PUBLIC_GOOGLE_CLIENT_ID` before deployment.
-        </p>
-        <p v-if="isAuthenticating" class="auth-modal__status">Waiting for Google sign-in...</p>
-        <button class="btn btn--dark btn--modal" type="button" @click="showSignInPrompt = false">
-          Close
-        </button>
-      </div>
-    </div>
   </div>
 </template>

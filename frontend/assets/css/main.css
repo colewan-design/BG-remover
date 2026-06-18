@@ -1,4 +1,24 @@
+/* ── Light mode (default) ── */
 :root {
+  --bg: #F5F7FF;
+  --card: #FFFFFF;
+  --card-2: #F1F5F9;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-purple: rgba(108, 62, 232, 0.35);
+  --text: #0F172A;
+  --muted: #94A3B8;
+  --muted-2: #64748B;
+  --primary: #7C3AED;
+  --primary-2: #4F46E5;
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(108, 62, 232, 0.06);
+}
+
+/* ── Dark mode ── */
+[data-theme="dark"] {
   --bg: #0B0F1A;
   --card: #111827;
   --card-2: #1A2438;
@@ -7,11 +27,8 @@
   --text: #F1F5F9;
   --muted: #475569;
   --muted-2: #94A3B8;
-  --primary: #7C3AED;
-  --primary-2: #4F46E5;
-  --radius-lg: 20px;
-  --radius-md: 12px;
-  --radius-pill: 999px;
+  --topbar-bg: rgba(11, 15, 26, 0.88);
+  --shadow: none;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -48,7 +65,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(11, 15, 26, 0.88);
+  background: var(--topbar-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
@@ -128,6 +145,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   cursor: pointer;
   transition: opacity 0.15s, transform 0.15s;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
 .btn--cta:hover { opacity: 0.88; transform: translateY(-1px); }
@@ -137,6 +155,25 @@ main { flex: 1; display: flex; flex-direction: column; }
 .btn--auth {
   padding: 10px 16px;
 }
+
+.btn--theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.btn--theme:hover { background: var(--card); transform: translateY(-1px); }
+.btn--theme svg { width: 16px; height: 16px; }
 
 /* ── Workspace ── */
 .workspace {
@@ -167,6 +204,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   border: 2px dashed var(--border-purple);
   border-radius: var(--radius-lg);
   background: var(--card);
+  box-shadow: var(--shadow);
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
@@ -260,6 +298,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
