@@ -8,6 +8,9 @@ useHead({
         'Remove image backgrounds instantly for free. No signup, no upload limits. Powered by AI and runs in your browser.',
     },
   ],
+  link: [
+    { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+  ],
 })
 </script>
 
