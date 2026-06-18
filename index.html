@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BG Remover — Free AI Background Removal</title>
+  <meta name="description" content="Remove image backgrounds instantly for free. No signup, no upload limits. Powered by AI, runs entirely in your browser.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>BG Remover</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Remove Image Backgrounds <span class="accent">Instantly</span></h1>
+      <p class="subtitle">100% free &middot; No signup &middot; Runs entirely in your browser &middot; Your images never leave your device</p>
+    </div>
+  </section>
+
+  <main class="container">
+
+    <!-- Upload -->
+    <section id="upload-section">
+      <div id="upload-zone" role="button" tabindex="0" aria-label="Upload an image to remove its background">
+        <div class="upload-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <p class="upload-title">Drop your image here</p>
+        <p class="upload-hint">or <span class="link-text">click to browse</span></p>
+        <p class="upload-formats">JPG, PNG, WEBP &middot; Max 10 MB</p>
+        <input type="file" id="file-input" accept="image/*" hidden>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" hidden aria-live="polite" aria-label="Processing image">
+      <div class="loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-title">Removing background&hellip;</p>
+        <p class="loading-sub" id="loading-sub">Loading AI model (one-time download)</p>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <section id="result-section" hidden>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Before &amp; After</h2>
+          <button id="new-image-btn" class="btn-outline">&#8592; Try Another</button>
+        </div>
+        <div class="comparison-container" id="comparison-container" role="img" aria-label="Before and after comparison slider">
+          <img id="img-before" class="comparison-base" alt="Original image">
+          <div class="comparison-after" id="comparison-after">
+            <img id="img-after" class="comparison-base" alt="Background removed result">
+          </div>
+          <input type="range" id="comparison-slider" class="comparison-range" min="0" max="100" value="50" aria-label="Drag to compare before and after">
+          <div class="slider-line" id="slider-line">
+            <div class="slider-handle" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L4 12l4.59-4.59L10 9l-3 3 3 3-1.41 1.59zm6.82 0L21 12l-5.59-5.59L14 7.99l3 3-3 3 1.41 1.6z"/></svg>
+            </div>
+          </div>
+          <span class="cmp-label cmp-label-before" aria-hidden="true">Original</span>
+          <span class="cmp-label cmp-label-after" aria-hidden="true">Result</span>
+        </div>
+      </div>
+
+      <div class="card customize-card">
+        <h2>Background</h2>
+        <div class="controls-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="transparent-toggle" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-text">Transparent</span>
+          </label>
+          <div class="color-row" id="color-row">
+            <span class="color-label">Color</span>
+            <input type="color" id="color-picker" value="#ffffff" aria-label="Background color">
+            <span class="color-hex" id="color-hex">#ffffff</span>
+          </div>
+        </div>
+        <button id="download-btn" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+      </div>
+
+    </section>
+  </main>
+
+  <section class="features">
+    <div class="container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">🔒</div>
+          <h3>100% Private</h3>
+          <p>Your images are processed entirely in your browser. Nothing is ever uploaded to a server.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">⚡</div>
+          <h3>AI-Powered</h3>
+          <p>Uses a state-of-the-art segmentation model for clean, precise results — even on hair and fur.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">🆓</div>
+          <h3>Always Free</h3>
+          <p>No watermarks, no limits, no signup required. Process as many images as you want.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BG Remover &middot; All processing happens locally in your browser</p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
